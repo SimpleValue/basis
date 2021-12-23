@@ -11,29 +11,34 @@
       (:out)
       (json/parse-string true)))
 
-(defn save
+(defn save!
   [secret]
   (process/check
     (process/process
       ["kubectl" "apply" "-f" "-"]
       {:in (json/generate-string secret)})))
 
-(defn edit
+(defn edit!
   [params f]
   (-> (get-secret params)
       (f)
-      (save)))
+      (save!)))
 
 (defn base64-encode [to-encode]
   (.encodeToString (java.util.Base64/getUrlEncoder)
                    to-encode))
 
-(defn add
+(defn set!
   [{:keys [key value] :as params}]
-  (edit params
-        (fn [secret]
-          (assoc-in secret
-                    [:data
-                     key]
-                    (base64-encode (.getBytes value
-                                              "UTF-8"))))))
+  (edit! params
+         (fn [secret]
+           (assoc-in secret
+                     [:data
+                      key]
+                     (base64-encode (.getBytes value
+                                               "UTF-8"))))))
+
+(comment
+  (get-secret {:secret-name "app-env"})
+
+  )
