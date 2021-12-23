@@ -28,7 +28,7 @@
   (.encodeToString (java.util.Base64/getUrlEncoder)
                    to-encode))
 
-(defn set!
+(defn set-key-value!
   [{:keys [key value] :as params}]
   (edit! params
          (fn [secret]
