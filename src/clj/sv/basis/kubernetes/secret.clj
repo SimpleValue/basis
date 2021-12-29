@@ -64,7 +64,7 @@
   [a-map]
   (into {}
         (map (fn [[key value]]
-               [key
+               [(keyword key)
                 (base64-encode
                  (.getBytes value
                             "UTF-8"))])
