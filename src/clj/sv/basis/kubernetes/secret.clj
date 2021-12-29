@@ -5,27 +5,37 @@
    https://kubernetes.io/docs/tasks/inject-data-application/distribute-credentials-secure/#configure-all-key-value-pairs-in-a-secret-as-container-environment-variables
 
    Everything works via Kubernetes `kubectl` command line tool. Please
-   make sure it is connected to the correct Kubernetes cluster."
+   make sure it is connected to the correct Kubernetes cluster or
+   provide the cluster name in the params."
   (:require [babashka.process :as process]
             [cheshire.core :as json]))
 
 (defn get-secret
-  "Gets a Kubernetes secret by name."
-  [{:keys [secret-name]}]
+  "Gets a Kubernetes secret by name.
+
+   Optionally define the Kubernetes `:cluster` for which `kubectl`
+   should be invoked."
+  [{:keys [secret-name cluster]}]
   (-> (process/process
+       (concat
         ["kubectl" "get" "secret" secret-name "-o" "json"]
-        {:out :string})
+        (when cluster
+          ["--cluster" cluster]))
+       {:out :string})
       (process/check)
       (:out)
       (json/parse-string true)))
 
 (defn save!
   "Saves the Kubernetes `secret`."
-  [secret]
+  [{:keys [cluster]} secret]
   (process/check
-    (process/process
-      ["kubectl" "apply" "-f" "-"]
-      {:in (json/generate-string secret)})))
+   (process/process
+    (concat
+     ["kubectl" "apply" "-f" "-"]
+     (when cluster
+       ["--cluster" cluster]))
+    {:in (json/generate-string secret)})))
 
 (defn edit!
   "Edits a Kubernetes secret by getting its current value, applying the
@@ -36,7 +46,8 @@
   [params f & args]
   (let [secret (get-secret params)
         new-secret (apply f secret args)]
-    (save! new-secret)))
+    (save! params
+           new-secret)))
 
 (defn base64-encode
   [to-encode]
