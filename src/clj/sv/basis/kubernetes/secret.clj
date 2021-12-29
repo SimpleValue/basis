@@ -64,7 +64,7 @@
   [a-map]
   (into {}
         (map (fn [[key value]]
-               [key
+               [(keyword key)
                 (base64-encode
                  (.getBytes value
                             "UTF-8"))])
@@ -92,7 +92,8 @@
   "Sets the `key` `value` in the `secret`'s data."
   [secret key value]
   (merge-key-values secret
-                    {key value}))
+                    {(keyword key)
+                     value}))
 
 (defn get-key-values
   "Returns the data of a secret and decodes all map values from base64
